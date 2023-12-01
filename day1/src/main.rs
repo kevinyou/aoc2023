@@ -1,7 +1,7 @@
 use std::io::{self, BufRead};
 
 
-fn parse_digit_word(substr: &str) -> Option<u32>{
+fn parse_digit_word(substr: &str) -> Option<u32> {
     let digit_words = [
         "one",
         "two",
