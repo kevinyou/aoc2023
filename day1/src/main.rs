@@ -1,5 +1,28 @@
 use std::io::{self, BufRead};
 
+
+fn parse_digit_word(substr: &str) -> Option<u32>{
+    let digit_words = [
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "eight",
+        "nine",
+    ];
+
+    for (word_index, digit_word) in digit_words.iter().enumerate() {
+        if substr.contains(digit_word) {
+            return Some(word_index as u32 + 1);
+        }
+    }
+
+    return None;
+}
+
 fn main() {
     let stdin = io::stdin();
     let mut lines = stdin.lock().lines();
@@ -14,18 +37,6 @@ fn main() {
             continue;
         }
 
-        let digit_words = [
-            "one",
-            "two",
-            "three",
-            "four",
-            "five",
-            "six",
-            "seven",
-            "eight",
-            "nine",
-        ];
-
         let mut first_digit: Option<u32> = None;
         let mut last_digit: Option<u32> = None;
         'outer: for i in 0..line.len() {
@@ -37,11 +48,12 @@ fn main() {
                 break 'outer;
             }
 
-            for (word_index, digit_word) in digit_words.iter().enumerate() {
-                if substr.contains(digit_word) {
-                    first_digit = Some(word_index as u32 + 1);
+            match parse_digit_word(&substr) {
+                Some(val) => {
+                    first_digit = Some(val);
                     break 'outer;
                 }
+                None => (),
             }
         }
 
@@ -54,11 +66,12 @@ fn main() {
                 break 'outer;
             }
 
-            for (word_index, digit_word) in digit_words.iter().enumerate() {
-                if substr.contains(digit_word) {
-                    last_digit = Some(word_index as u32 + 1);
+            match parse_digit_word(&substr) {
+                Some(val) => {
+                    last_digit = Some(val);
                     break 'outer;
                 }
+                None => (),
             }
         }
 
