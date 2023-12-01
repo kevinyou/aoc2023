@@ -8,13 +8,12 @@ fn main() {
 
     while let Some(line) = lines.next() {
 
-        let mut line = line.unwrap();
+        let line = line.unwrap();
         // Trailing newline
         if line.len() == 0 {
             continue;
         }
 
-        // Replace all instances of word with digit
         let digit_words = [
             "one",
             "two",
@@ -27,28 +26,48 @@ fn main() {
             "nine",
         ];
 
-        for (index, word) in digit_words.iter().enumerate() {
-            let val = (index + 1).to_string();
-            line = line.replace(word, &val);
+        let mut first_digit: Option<u32> = None;
+        let mut last_digit: Option<u32> = None;
+        'outer: for i in 0..line.len() {
+            let substr: String = line.chars().take(i + 1).collect();
+            let c = substr.chars().last().expect("Getting last char failed");
+
+            if c.is_digit(10) {
+                first_digit = c.to_digit(10);
+                break 'outer;
+            }
+
+            for (word_index, digit_word) in digit_words.iter().enumerate() {
+                if substr.contains(digit_word) {
+                    first_digit = Some(word_index as u32 + 1);
+                    break 'outer;
+                }
+            }
         }
 
-        let first_digit = line.find(|c: char| c.is_digit(10)).expect("no first digit?");
-        let first_digit = line
-            .chars()
-            .nth(first_digit)
-            .expect("Index from find not found");
+        'outer: for i in (0..line.len()).rev() {
+            let substr: String = line.chars().skip(i).collect();
+            let c = substr.chars().nth(0).expect("Getting first char failed");
 
-        let last_digit = line.rfind(|c: char| c.is_digit(10)).expect("no second digit?");
-        let last_digit = line
-            .chars()
-            .nth(last_digit)
-            .expect("Index from find not found");
+            if c.is_digit(10) {
+                last_digit = c.to_digit(10);
+                break 'outer;
+            }
 
+            for (word_index, digit_word) in digit_words.iter().enumerate() {
+                if substr.contains(digit_word) {
+                    last_digit = Some(word_index as u32 + 1);
+                    break 'outer;
+                }
+            }
+        }
+
+        let first_digit = first_digit.expect("First digit Not found");
+        let last_digit = last_digit.expect("Last digit not found");
         let calibration_value = format!("{}{}", first_digit, last_digit);
         let calibration_value: u32 = calibration_value.parse().expect("not a num");
         total_calibration_value += calibration_value;
-    println!("{}", calibration_value);
     }
 
-    // println!("{}", total_calibration_value);
+    println!("{}", total_calibration_value);
 }
