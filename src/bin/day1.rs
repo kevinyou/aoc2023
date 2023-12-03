@@ -1,3 +1,4 @@
+
 use aoc2023::load_file;
 
 fn parse_digit_word(substr: &str) -> Option<u32> {
@@ -22,7 +23,7 @@ fn parse_digit_word(substr: &str) -> Option<u32> {
     return None;
 }
 
-fn solve(lines: Vec<String>, legacy_part1_flag: bool) -> u32 {
+fn solve(lines: &Vec<String>, legacy_part1_flag: bool) -> u32 {
     let mut total_calibration_value = 0;
     for line in lines {
         // Trailing newline
@@ -85,11 +86,15 @@ fn solve(lines: Vec<String>, legacy_part1_flag: bool) -> u32 {
 
 fn main() {
     // let lines = load_from_stdin();
-    let lines = load_file("./part1.txt");
+    let lines = load_file("./data/day1/part1.txt");
 
-    let total_calibration_value = solve(lines, false);
+    let part1 = solve(&lines, true);
 
-    println!("{}", total_calibration_value);
+    println!("Part 1: {part1}");
+
+    let part2 = solve(&lines, false);
+
+    println!("Part 1: {part2}");
 }
 
 #[cfg(test)]
@@ -99,7 +104,7 @@ mod tests {
     #[test]
     fn test_part_1() {
         assert_eq!(
-            solve(load_file("./example.txt"), true),
+            solve(&load_file("./data/day1/example1.txt"), true),
             142
         );
     }
@@ -107,7 +112,7 @@ mod tests {
     #[test]
     fn test_part_2() {
         assert_eq!(
-            solve(load_file("./example2.txt"), false),
+            solve(&load_file("./data/day1/example2.txt"), false),
             281
         );
     }
