@@ -112,7 +112,7 @@ fn solve_part1(lines: &Vec<String>) -> u32 {
             let elem = SchematicPartNumber {
                 row: i,
                 col_start: col_start as usize,
-                col_end: grid[0].len() - 1,
+                col_end: (col_start as usize) + part_number_string.len(),
             };
             part_numbers.push(elem);
         }
