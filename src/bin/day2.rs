@@ -5,6 +5,7 @@ use std::str::FromStr;
 static DAYSTRING: &str = "day2";
 
 
+#[derive(Debug)]
 enum Color {
     Red,
     Green,
@@ -29,7 +30,6 @@ struct Clue {
     count: u32,
     color: Color,
 }
-
 
 fn parse_clue(clue: &str) -> Clue{
     let parts: Vec<&str> = clue.trim().split(' ').collect();
@@ -69,8 +69,8 @@ fn solve_part1(lines: &Vec<String>) -> u32 {
             for clue in set {
                 let quantity = match clue.color {
                     Color::Red => 12,
-                    Color::Blue => 13,
-                    Color::Green => 14,
+                    Color::Green => 13,
+                    Color::Blue => 14,
                 };
                 if clue.count > quantity {
                     valid = false;
