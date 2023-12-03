@@ -72,66 +72,6 @@ fn get_all_adjacent_symbols(part: &SchematicPartNumber, grid: &Vec<Vec<char>>) -
     return symbol_coords;
 }
 
-/**
- * Check these numbers in a grid:
- * ........
- * XXXXXXX.
- * X12345X.
- * XXXXXXX.
- */
-fn check_adjacent(part: &SchematicPartNumber, grid: &Vec<Vec<char>>) -> bool {
-    let char_right_of_number = grid[part.row].get(part.col_end);
-    if let Some(c) = char_right_of_number {
-        if is_symbol(*c) {
-            return true;
-        }
-    }
-
-    let mut left_index = part.col_start;
-    if left_index > 0 {
-        left_index = left_index - 1;
-
-        let char_left_of_number = grid[part.row].get(left_index);
-        if let Some(c) = char_left_of_number {
-            if is_symbol(*c) {
-                return true;
-            }
-        }
-    }
-
-    if part.row > 0 {
-        let row_above_number = grid
-            .get(part.row - 1);
-        if let Some(row) = row_above_number {
-            for j in left_index..=(part.col_end) {
-                let maybe_c = row
-                    .get(j);
-                if let Some(c) = maybe_c {
-                    if is_symbol(*c) {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    let row_below_number = grid
-        .get(part.row + 1);
-    if let Some(row) = row_below_number {
-        for j in left_index..=(part.col_end) {
-            let maybe_c = row
-                .get(j);
-            if let Some(c) = maybe_c {
-                if is_symbol(*c) {
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
 fn is_symbol(c: char) -> bool {
     !c.is_digit(10) && c != '.'
 }
@@ -187,7 +127,8 @@ fn solve_part1(lines: &Vec<String>) -> u32 {
             .parse::<u32>()
             .expect("Did not form number");
 
-        if check_adjacent(&part_number, &grid) {
+        let adjacent_symbol_coords = get_all_adjacent_symbols(&part_number, &grid);
+        if adjacent_symbol_coords.len() > 0 {
             part_number_sum += part_number_value;
         }
     }
@@ -248,6 +189,17 @@ fn solve_part2(lines: &Vec<String>) -> u32 {
             .parse::<u32>()
             .expect("Did not form number");
 
+        let adjacent_symbol_coords = get_all_adjacent_symbols(&part_number, &grid);
+        for (row, col, c) in adjacent_symbol_coords {
+            if c == '*' {
+                gear_map
+                    .entry((row, col))
+                    .or_insert(Vec::new())
+                    .push(part_number_value);
+            }
+        }
+
+
         // Find all gears that part number touches
         // For each gear, add part number to gear_map
     }
@@ -269,6 +221,10 @@ fn main() {
     let part1 = solve_part1(&lines);
 
     println!("Part 1: {part1}");
+
+    let part2 = solve_part2(&lines);
+
+    println!("Part 2: {part2}");
 }
 
 #[cfg(test)]
