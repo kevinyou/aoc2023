@@ -94,7 +94,7 @@ fn main() {
 
     let part2 = solve(&lines, false);
 
-    println!("Part 1: {part2}");
+    println!("Part 2: {part2}");
 }
 
 #[cfg(test)]
