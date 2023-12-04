@@ -12,10 +12,16 @@ fn solve_part1(lines: &Vec<String>) -> u32 {
             let line: Vec<&str> = line.split(':').collect();
             let sides: Vec<&str> = line[1].trim().split('|').collect();
 
-            let winning_numbers = sides[0].trim().split(' ');
+            let winning_numbers = sides[0]
+                .trim()
+                .split(' ')
+                .filter(|s| s.len() > 0);
             let winning_numbers: HashSet<&str> = HashSet::from_iter(winning_numbers);
 
-            let card_numbers = sides[1].trim().split(' ');
+            let card_numbers = sides[1]
+                .trim()
+                .split(' ')
+                .filter(|s| s.len() > 0);
 
             let num_winning = card_numbers
                 .filter(|n| winning_numbers.contains(n))
