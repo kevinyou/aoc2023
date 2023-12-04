@@ -1,10 +1,31 @@
 
+use std::collections::HashSet;
 use aoc2023::load_file;
 
 static DAYSTRING: &str = "day4";
 
 fn solve_part1(lines: &Vec<String>) -> u32 {
-    0
+    lines
+        .into_iter()
+        .filter(|line| line.len() > 0)
+        .map(|line| {
+            let line: Vec<&str> = line.split(':').collect();
+            let sides: Vec<&str> = line[1].trim().split('|').collect();
+
+            let winning_numbers = sides[0].trim().split(' ');
+            let winning_numbers: HashSet<&str> = HashSet::from_iter(winning_numbers);
+
+            let card_numbers = sides[1].trim().split(' ');
+
+            let num_winning = card_numbers
+                .filter(|n| winning_numbers.contains(n))
+                .count() as u32;
+            if num_winning == 0 {
+                return 0;
+            }
+            u32::pow(2, num_winning - 1)
+        })
+        .sum()
 }
 
 
