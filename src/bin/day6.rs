@@ -62,7 +62,6 @@ fn solve_part2(lines: &Vec<String>) -> u64 {
         .collect::<String>()
         .parse::<u64>()
         .expect("failed to parse number");
-    println!("{} {}", time, distance);
     get_num_ways(time, distance)
 }
 
