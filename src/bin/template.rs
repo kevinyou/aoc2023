@@ -3,10 +3,12 @@ use aoc2023::load_file;
 
 static DAYSTRING: &str = "day0";
 
+#[allow(unused_variables)]
 fn solve_part1(lines: &Vec<String>) -> u32 {
     0
 }
 
+#[allow(unused_variables)]
 fn solve_part2(lines: &Vec<String>) -> u32 {
     0
 }

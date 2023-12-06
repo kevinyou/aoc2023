@@ -1,79 +1,22 @@
 
-use std::cmp::Ordering;
-
 use aoc2023::load_file;
 
 static DAYSTRING: &str = "day5";
 
-enum OverlapType {
-    None,
-    PartialNewHigher,
-    PartialOldHigher,
-    NewInOld,
-    OldInNew,
-}
-
 #[derive(Debug, Clone)]
-struct Interval {
-    // Inclusive
-    start: i64,
-    // Inclusive
-    end: i64,
-}
-
-#[derive(Debug, Clone)]
-struct MapFunction {
-    domain: Interval,
-    range: Interval,
-}
-
-impl Ord for MapFunction {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.range.start.cmp(&other.range.start)
-    }
-}
-
-impl PartialOrd for MapFunction {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for MapFunction {
-    fn eq(&self, other: &Self) -> bool {
-        self.range.start == other.range.start
-    }
-}
-
-impl Eq for MapFunction {}
-
-
-fn get_overlap_type(old: &MapFunction, new: &MapFunction) -> OverlapType {
-    if new.domain.start >= old.range.start && new.domain.start < old.range.end {
-        if new.domain.end <= old.range.end {
-            return OverlapType::NewInOld;
-        } else  {
-            return OverlapType::PartialNewHigher;
-        }
-    }
-
-    if old.domain.start >= new.range.start && old.domain.start < new.range.end {
-        if old.domain.end <= new.range.end {
-            return OverlapType::OldInNew;
-        } else  {
-            return OverlapType::PartialOldHigher;
-        }
-    }
-
-    return OverlapType::None;
-}
-
-#[derive(Debug)]
 struct MapEntry {
-    source: i64,
     destination: i64,
+    source: i64,
     len: i64,
 }
+
+impl MapEntry {
+    #[allow(dead_code)]
+    fn to_input_form(&self) -> String {
+        return format!("{} {} {}", self.destination, self.source, self.len);
+    }
+}
+
 
 type Map = Vec<MapEntry>;
 
@@ -90,126 +33,6 @@ fn parse_map_entry(line: &String) -> MapEntry {
     }
 }
 
-fn parse_map_function(line: &String) -> MapFunction {
-    let line: Vec<i64> = line
-        .split(' ')
-        .filter(|s| s.len() > 0)
-        .map(|s| s.parse().expect("non-number in map entry"))
-        .collect();
-    MapFunction {
-        domain: Interval {
-            start: line[1],
-            end: line[1] + line[2] - 1,
-        },
-        range: Interval {
-            start: line[0],
-            end: line[0] + line[2] - 1,
-        },
-    }
-}
-
-fn handle_full_subset(outer_function: &MapFunction, inner_function: &MapFunction) -> Vec<MapFunction> {
-    let left_old_domain_intersection_point = (outer_function.domain.start  - outer_function.range.start) + inner_function.domain.start;
-    let right_old_domain_intersection_point = (outer_function.domain.start  - outer_function.range.start) + inner_function.domain.end;
-
-        let left = MapFunction {
-        domain: Interval {
-            start: outer_function.domain.start,
-            end: left_old_domain_intersection_point - 1,
-        },
-        range: Interval {
-            start: outer_function.range.start,
-            end: inner_function.domain.start - 1,
-        },
-        };
-
-        let middle = MapFunction {
-        domain: Interval {
-            start: left_old_domain_intersection_point,
-            end: right_old_domain_intersection_point,
-        },
-        range: Interval {
-            start: inner_function.range.start,
-            end: inner_function.range.end,
-        },
-        };
-
-        let right = MapFunction {
-        domain: Interval {
-            start: right_old_domain_intersection_point + 1,
-            end: outer_function.domain.end,
-        },
-        range: Interval {
-            start: inner_function.domain.end + 1,
-            end: outer_function.range.end,
-        },
-        };
-
-        let mut pieces = Vec::new();
-
-        if left.domain.end > left.domain.start && left.domain.end >= 0 && left.range.end > 0 {
-            pieces.push(left);
-        }
-        pieces.push(middle);
-        if right.domain.end > right.domain.start {
-            pieces.push(right);
-        }
-
-        return pieces;
-}
-
-
-fn handle_partial_overlap(higher_function: &MapFunction, lower_function: &MapFunction) -> Vec<MapFunction> {
-    let lower_range_left_intersction_point = higher_function.domain.start;
-    let lower_domain_left_intersction_point = higher_function.domain.start + (lower_function.domain.start - lower_function.range.start);
-    let left = MapFunction {
-        domain: Interval {
-            start: lower_function.domain.start,
-            end: lower_domain_left_intersction_point - 1,
-        },
-        range: Interval {
-            start: lower_function.range.start,
-            end: lower_range_left_intersction_point - 1,
-        },
-    };
-
-    let higher_domain_right_intersection_point = lower_function.range.end;
-    let higher_range_right_intersection_point = lower_function.range.end + (higher_function.range.start - higher_function.domain.start);
-
-    let middle = MapFunction {
-        domain: Interval {
-            start: lower_domain_left_intersction_point,
-            end: lower_function.domain.end,
-        },
-        range: Interval {
-            start: higher_function.range.start,
-            end: higher_range_right_intersection_point,
-        },
-    };
-
-    let right = MapFunction {
-        domain: Interval {
-            start: higher_domain_right_intersection_point + 1,
-            end: higher_function.domain.end,
-        },
-        range: Interval {
-            start: higher_range_right_intersection_point + 1,
-            end: higher_function.range.end,
-        },
-    };
-
-    let mut pieces = Vec::new();
-    if left.domain.end > left.domain.start && left.domain.end >= 0 && left.range.end > 0 {
-        pieces.push(left);
-    }
-    pieces.push(middle);
-    if right.domain.end > right.domain.start {
-        pieces.push(right);
-    }
-    return pieces;
-}
-
-
 fn layer(source: i64, map: &Map) -> i64 {
     let entry: Vec<&MapEntry> = map
         .into_iter()
@@ -222,33 +45,6 @@ fn layer(source: i64, map: &Map) -> i64 {
         let entry = entry[0];
         let delta = source - entry.source;
         return entry.destination + delta;
-    }
-    return source;
-}
-
-fn layer_part2(source: i64, map: &Vec<MapFunction>) -> i64 {
-    let entry: Vec<&MapFunction> = map
-        .into_iter()
-        .filter(|f| source >= f.domain.start && source <= f.domain.end)
-        .collect();
-    if entry.len() > 0 {
-        // only one matching range
-        /*
-        if entry.len() != 1 {
-            println!("{:?}", source);
-            println!("{:#?}", entry);
-            assert_eq!(1, 0, "panik");
-        }
-        assert_eq!(entry.len(), 1);
-        */
-
-        let entry = entry[0];
-        let delta = source - entry.domain.start;
-        let output = entry.range.start + delta;
-        // println!("{:?}", source);
-        // println!("{:#?}", entry);
-        // println!("{:?}", output);
-        return output;
     }
     return source;
 }
@@ -321,12 +117,6 @@ fn solve_part1(lines: &Vec<String>) -> i64 {
         i += 1;
     }
 
-    let layer1: Vec<i64> = seeds
-        .clone()
-        .into_iter()
-        .map(|source| layer(source, &seed_to_soil))
-        .collect();
-
     seeds
         .into_iter()
         .map(|source| layer(source, &seed_to_soil))
@@ -338,6 +128,201 @@ fn solve_part1(lines: &Vec<String>) -> i64 {
         .map(|source| layer(source, &humidity_to_location))
         .min()
         .expect("does not have min")
+}
+
+// one layer of maps
+fn collapse(existing: &mut Vec<MapEntry>, new_block: &mut Vec<MapEntry>) {
+    // Precondition: existing is sorted by dest
+
+    // Sort new_block by source
+    new_block
+        .sort_by(|a, b| a.source.cmp(&b.source));
+
+    let mut add_to_existing: Vec<MapEntry> = Vec::new();
+
+    for new_entry in new_block {
+        let mut has_overlap = false;
+        for old_entry in existing.iter_mut() {
+            if new_entry.source <= old_entry.destination && old_entry.destination < new_entry.source + new_entry.len {
+                if new_entry.source + new_entry.len > old_entry.destination + old_entry.len {
+                    // need three parts T_T but at least none are mutates
+                    let overlap_size = old_entry.len;
+
+                    let middle_new = MapEntry {
+                        destination: new_entry.destination - new_entry.source + old_entry.destination,
+                        source: old_entry.destination,
+                        len: overlap_size,
+                    };
+                    let left_new = MapEntry {
+                        destination: new_entry.destination,
+                        source: new_entry.source,
+                        len: middle_new.source - new_entry.source,
+                    };
+                    let right_new = MapEntry {
+                        destination: middle_new.destination + middle_new.len,
+                        source: middle_new.source + middle_new.len,
+                        len: new_entry.len - overlap_size - (left_new.len),
+                    };
+
+                    // merge middle_new and old_entry
+                    let merged = MapEntry {
+                        destination: middle_new.destination,
+                        source: old_entry.source,
+                        len: overlap_size,
+                    };
+                    // assign merged to old_entry
+                    old_entry.destination = merged.destination;
+                    old_entry.source = merged.source;
+                    old_entry.len = merged.len;
+                    // push left_new and right_new to add to existing
+                    add_to_existing.push(left_new);
+                    stack.push(right_new);
+                    // add_to_existing.push(right_new);
+                    continue;
+                }
+                // split new_entry into two parts to exactly fit!
+                let overlap_size = std::cmp::min(old_entry.len, new_entry.source + new_entry.len - old_entry.destination);
+                let left_new = MapEntry {
+                    destination: new_entry.destination,
+                    source: new_entry.source,
+                    len: new_entry.len - overlap_size,
+                };
+                let right_new = MapEntry {
+                    destination: new_entry.destination - new_entry.source + old_entry.destination,
+                    source: old_entry.destination,
+                    len: overlap_size,
+                };
+
+                if right_new.len == old_entry.len {
+                    // merge right_new with old_entry
+                    let merged = MapEntry {
+                        destination: right_new.destination,
+                        source: old_entry.source,
+                        len: overlap_size,
+                    };
+                    // assign merged to old_entry
+                    old_entry.destination = merged.destination;
+                    old_entry.source = merged.source;
+                    old_entry.len = merged.len;
+                    if left_new.len > 0 {
+                        add_to_existing.push(left_new);
+                    }
+                } else {
+                    let left_old = MapEntry {
+                        destination: old_entry.destination,
+                        source: old_entry.source,
+                        len: overlap_size
+                    };
+                    let right_old = MapEntry {
+                        destination: old_entry.destination + overlap_size,
+                        source: old_entry.source + overlap_size,
+                        len: old_entry.len - overlap_size,
+                    };
+                    // merge right_new and left_old
+                    let merged = MapEntry {
+                        destination: right_new.destination,
+                        source: left_old.source,
+                        len: overlap_size,
+                    };
+                    // add left_new and merged to array
+                    if left_new.len > 0 {
+                        add_to_existing.push(left_new);
+                    }
+                    add_to_existing.push(merged);
+                    // update old_entry to right_old
+                    old_entry.destination = right_old.destination;
+                    old_entry.source = right_old.source;
+                    old_entry.len = right_old.len;
+                }
+            } else if old_entry.destination <= new_entry.source && new_entry.source < old_entry.destination + old_entry.len {
+                // omg. at least no contains to deal with :'()
+
+                let overlap_size = std::cmp::min(new_entry.len, old_entry.destination + old_entry.len - new_entry.source);
+
+                let left_old = MapEntry {
+                    destination: old_entry.destination,
+                    source: old_entry.source,
+                    len: old_entry.len - overlap_size,
+                };
+                let right_old = MapEntry {
+                    destination: old_entry.destination + left_old.len,
+                    source: old_entry.source + left_old.len,
+                    len: overlap_size,
+                };
+
+                if right_old.len == new_entry.len {
+                    // merge right_old with new_entry
+                    let merged = MapEntry {
+                        destination: right_old.destination,
+                        source: new_entry.source,
+                        len: overlap_size,
+                    };
+                    // assign merged to old_entry
+                    old_entry.destination = merged.destination;
+                    old_entry.source = merged.source;
+                    old_entry.len = merged.len;
+                    // add left_old to add_to_existing, doesn't need to be in existing because it's strictly lower
+                    add_to_existing.push(left_old);
+                } else {
+                    let left_new = MapEntry {
+                        destination: new_entry.destination,
+                        source: new_entry.source,
+                        len: overlap_size,
+                    };
+                    let right_new = MapEntry {
+                        destination: new_entry.destination + overlap_size,
+                        source: new_entry.source + overlap_size,
+                        len: new_entry.len - overlap_size,
+                    };
+                    // merge right_old and left_new
+                    let merged = MapEntry {
+                        destination: right_old.destination,
+                        source: left_new.source,
+                        len: overlap_size,
+                    };
+                    // assign right_old to old_entry
+                    old_entry.destination = merged.destination;
+                    old_entry.source = merged.source;
+                    old_entry.len = merged.len;
+                    // add right_new and left_old
+                    add_to_existing.push(left_old);
+                    // add_to_existing.push(right_new);
+                    stack.push(right_new);
+                    continue;
+                }
+            }
+        }
+        if !has_overlap {
+            add_to_existing.push(new_entry.clone());
+        }
+    }
+
+    existing.append(&mut add_to_existing);
+    existing 
+        .sort_by(|a, b| a.source.cmp(&b.source));
+}
+
+fn create_blocks(lines: &Vec<String>) -> Vec<Vec<MapEntry>> {
+    let mut blocks: Vec<Vec<MapEntry>> = Vec::new();
+    let mut block = Vec::new();
+    for line in lines.into_iter().skip(2) {
+        if line == "" {
+            if block.len() > 0 {
+                blocks.push(block);
+                block = Vec::new();
+            }
+            continue;
+        }
+
+        if line.chars().nth(0).unwrap().is_alphabetic() {
+            continue;
+        }
+
+        let new_function = parse_map_entry(line);
+        block.push(new_function);
+    }
+
+    return blocks;
 }
 
 /**
@@ -356,96 +341,16 @@ fn solve_part2(lines: &Vec<String>) -> i64 {
         .map(|s| s.parse().expect("Seed not numbers"))
         .collect();
 
+    let blocks = create_blocks(lines);
 
-    let mut blocks: Vec<Vec<MapFunction>> = Vec::new();
-    let mut block = Vec::new();
-    for line in lines.into_iter().skip(2) {
-        if line == "" {
-            if block.len() > 0 {
-                blocks.push(block);
-                block = Vec::new();
-            }
-            continue;
-        }
-
-        if line.chars().nth(0).unwrap().is_alphabetic() {
-            continue;
-        }
-
-        let new_function = parse_map_function(line);
-        block.push(new_function);
-    }
-
-    let mut fs: Vec<MapFunction> = Vec::new();
-
-    let mut block_pending: Vec<MapFunction> = Vec::new();
-    for block in blocks {
-        let mut stack: Vec<MapFunction> = block.clone();
-        stack.reverse(); // not needed, really
-
-        while stack.len() > 0 {
-            let new_function = stack.pop().expect("Empty stack");
-
-            let mut index_to_remove: Option<usize> = None;
-            // let mut old_function: Option<MapFunction> = None;
-            for (i, old_function ) in fs.iter().enumerate() {
-                let ot = get_overlap_type(&old_function, &new_function);
-
-                match ot {
-                    OverlapType::None => {
-                        continue;
-                    },
-                    OverlapType::NewInOld => {
-                        index_to_remove = Some(i);
-                        let mut x = handle_full_subset(&old_function, &new_function);
-                        // because of sorting,
-                        // left and middle guaranteed not to have any more conflicts - they can go directly
-                        // into block_pending.
-                        // only right needs to go on the stack
-                        stack.append(&mut x);
-                        break;
-                    },
-                    OverlapType::OldInNew => {
-                        index_to_remove = Some(i);
-                        let mut x = handle_full_subset(&new_function, &old_function);
-                        stack.append(&mut x);
-                        break;
-                    },
-                    OverlapType::PartialNewHigher => {
-                        index_to_remove = Some(i);
-                        let mut x = handle_partial_overlap(&new_function, &old_function);
-                        stack.append(&mut x);
-                        break;
-                    },
-                    OverlapType::PartialOldHigher => {
-                        index_to_remove = Some(i);
-                        let mut x = handle_partial_overlap(&old_function, &new_function);
-                        stack.append(&mut x);
-                        break;
-                    },
-                };
-            }
-
-            if let Some(i) = index_to_remove {
-                fs.remove(i);
-            } else {
-                block_pending.push(new_function);
-            }
-
-            fs.sort();
-        }
-
-        fs.append(&mut block_pending);
-        block_pending = Vec::new();
-        // println!("{:#?}", fs);
-    }
-    if block_pending.len() > 0 {
-        fs.append(&mut block_pending);
+    let mut fs: Vec<MapEntry> = Vec::new();
+    for mut block in blocks {
+        collapse(&mut fs, &mut block);
     }
 
     seeds
         .into_iter()
-        .map(|source| layer_part2(source, &fs))
+        .map(|source| layer(source, &fs))
         .min()
         .expect("does not have min")
 }
@@ -486,102 +391,24 @@ mod tests {
         );
     }
 
+    // new very large outer
     #[test]
-    fn test_handle_full_subset() {
-        let a = MapFunction {
-            domain: Interval {
-                start: 1001,
-                end: 1010,
-            },
-            range: Interval {
-                start: 1,
-                end: 10,
-            },
-        };
+    fn test_collapse_example1 () {
+        let file_path = format!("./data/{DAYSTRING}/example1.txt");
+        let lines = load_file(&file_path);
+        let blocks = create_blocks(&lines);
 
-        let b = MapFunction {
-            domain: Interval {
-                start: 3,
-                end: 6,
-            },
-            range: Interval {
-                start: 103,
-                end: 106,
-            },
-        };
+        let mut fs: Vec<MapEntry> = Vec::new();
+        collapse(&mut fs, &mut blocks[0].clone());
 
-        let result = handle_full_subset(&a, &b);
-        let left = &result[0];
-        assert_eq!(left.domain.start, 1001);
-        assert_eq!(left.domain.end, 1002);
-        assert_eq!(left.range.start, 1);
-        assert_eq!(left.range.end, 2);
+        assert_eq!(fs.iter().map(|x| x.to_input_form()).collect::<Vec::<String>>(),
+            Vec::from(["52 50 48", "50 98 2"])
+        );
 
-        let middle = &result[1];
-        assert_eq!(middle.domain.start, 1003);
-        assert_eq!(middle.domain.end, 1006);
-        assert_eq!(middle.range.start, 103);
-        assert_eq!(middle.range.end, 106);
+        collapse(&mut fs, &mut blocks[1].clone());
 
-        let right = &result[2];
-        assert_eq!(right.domain.start, 1007);
-        assert_eq!(right.domain.end, 1010);
-        assert_eq!(right.range.start, 7);
-        assert_eq!(right.range.end, 10);
-
-    }
-
-    #[test]
-    fn test_handle_partial_overlap() {
-        let a = MapFunction {
-            domain: Interval {
-                start: 1001,
-                end: 1010,
-            },
-            range: Interval {
-                start: 1,
-                end: 10,
-            },
-        };
-
-        let b = MapFunction {
-            domain: Interval {
-                start: 3,
-                end: 15,
-            },
-            range: Interval {
-                start: 103,
-                end: 115,
-            },
-        };
-
-        let result = handle_partial_overlap(&b, &a);
-        let left = &result[0];
-        assert_eq!(left.domain.start, 1001, "left");
-        assert_eq!(left.domain.end, 1002, "left");
-        assert_eq!(left.range.start, 1, "left");
-        assert_eq!(left.range.end, 2, "left");
-
-        let middle = &result[1];
-        assert_eq!(middle.domain.start, 1003, "middle");
-        assert_eq!(middle.domain.end, 1010);
-        assert_eq!(middle.range.start, 103);
-        assert_eq!(middle.range.end, 110);
-
-        let right = &result[2];
-        assert_eq!(right.domain.start, 11, "right");
-        assert_eq!(right.domain.end, 15);
-        assert_eq!(right.range.start, 111);
-        assert_eq!(right.range.end, 115);
-
-    }
-
-    // #[test]
-    fn test_55() {
-        let file_path = format!("./data/{DAYSTRING}/extra1.txt");
-        assert_eq!(
-            solve_part2(&load_file(&file_path)),
-            35
+        assert_eq!(fs.iter().map(|x| x.to_input_form()).collect::<Vec::<String>>(),
+            Vec::from(["39 0 15", "0 15 35", "37 50 2", "54 52 46", "35 98 2"])
         );
     }
 }
