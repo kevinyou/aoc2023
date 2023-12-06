@@ -1,23 +1,20 @@
 
-use std::collections::HashSet;
 use aoc2023::load_file;
 
 static DAYSTRING: &str = "day6";
 
+fn f(total_time: u64, t: u64) -> u64 {
+    t * (total_time - t)
+}
+
 fn get_num_ways(time: u64, distance: u64) -> u64 {
     let mut count = 0;
     for time_held in 0..time {
-        let speed = time_held;
-        let time_traveling = time - time_held;
-        let distance_traveled = speed * time_traveling;
-        if distance_traveled > distance {
+        if f(time, time_held) > distance {
             count += 1;
         }
     }
     count
-}
-
-fn get_num_ways_bin(time: u64, distance: u64) -> () {
 }
 
 fn solve_part1(lines: &Vec<String>) -> u64 {
