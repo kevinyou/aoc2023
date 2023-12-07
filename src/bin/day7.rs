@@ -42,49 +42,27 @@ struct Hand {
 }
 
 fn get_card(c: char, is_part_2: bool) -> Card {
-    if c == '2' {
-        return Card::Two;
-    }
-    if c == '3' {
-        return Card::Three;
-    }
-    if c == '4' {
-        return Card::Four;
-    }
-    if c == '5' {
-        return Card::Five;
-    }
-    if c == '6' {
-        return Card::Six;
-    }
-    if c == '7' {
-        return Card::Seven;
-    }
-    if c == '8' {
-        return Card::Eight;
-    }
-    if c == '9' {
-        return Card::Nine;
-    }
-    if c == 'T' {
-        return Card::Ten;
-    }
-    if c == 'J' {
-        if is_part_2 {
-            return Card::Joker;
-        }
-        return Card::Jack;
-    }
-    if c == 'Q' {
-        return Card::Queen;
-    }
-    if c == 'K' {
-        return Card::King;
-    }
-    if c == 'A' {
-        return Card::Ace;
-    }
-    return Card::Two;
+    return match c {
+        '2' => Card::Two,
+        '3' => Card::Three,
+        '4' => Card::Four,
+        '5' => Card::Five,
+        '6' => Card::Six,
+        '7' => Card::Seven,
+        '8' => Card::Eight,
+        '9' => Card::Nine,
+        'T' => Card::Ten,
+        'J' => {
+            if is_part_2 {
+                return Card::Joker;
+            }
+            return Card::Jack;
+        },
+        'Q' => Card::Queen,
+        'K' => Card::King,
+        'A' => Card::Ace,
+        _ => Card::Two,
+    };
 }
 
 fn get_type(cards: &String, is_part_2: bool) -> HandType {
@@ -228,9 +206,12 @@ fn solve_part2(lines: &Vec<String>) -> u32 {
         return hand_type_ordering;
     });
 
+    // Handy for debugging!
+    /*
     for hand in hands.iter() {
         println!("{:?}", &hand);
     }
+    */
 
     hands
         .into_iter()
