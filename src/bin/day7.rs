@@ -22,25 +22,6 @@ enum Card {
     Ace,
 }
 
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum HandType {
-    HighCard,
-    OnePair,
-    TwoPair,
-    ThreeOfAKind,
-    FullHouse,
-    FourOfAKind,
-    FiveOfAKind,
-}
-
-#[derive(Debug)]
-struct Hand {
-    cards: [Card; 5],
-    bid: u32,
-    hand_type: HandType,
-}
-
 fn get_card(c: char, is_part_2: bool) -> Card {
     return match c {
         '2' => Card::Two,
@@ -63,6 +44,17 @@ fn get_card(c: char, is_part_2: bool) -> Card {
         'A' => Card::Ace,
         _ => Card::Two,
     };
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum HandType {
+    HighCard,
+    OnePair,
+    TwoPair,
+    ThreeOfAKind,
+    FullHouse,
+    FourOfAKind,
+    FiveOfAKind,
 }
 
 fn get_type(cards: &String, is_part_2: bool) -> HandType {
@@ -140,6 +132,13 @@ fn get_type(cards: &String, is_part_2: bool) -> HandType {
     HandType::HighCard
 }
 
+#[derive(Debug)]
+struct Hand {
+    cards: [Card; 5],
+    bid: u32,
+    hand_type: HandType,
+}
+
 fn line_to_hands(line: &String, is_part_2: bool) -> Hand {
     let parts: Vec<&str> = line
         .split(' ')
@@ -167,37 +166,7 @@ fn line_to_hands(line: &String, is_part_2: bool) -> Hand {
     };
 }
 
-fn solve_part1(lines: &Vec<String>) -> u32 {
-    let mut hands: Vec<Hand> = lines
-        .clone()
-        .iter()
-        .filter(|s| s.len() > 0)
-        .map(|x| line_to_hands(x, false))
-        .collect();
-    
-    hands.sort_by(|a, b| {
-        let hand_type_ordering = a.hand_type.cmp(&b.hand_type);
-        if let Ordering::Equal = hand_type_ordering {
-            return a.cards.cmp(&b.cards);
-        }
-        return hand_type_ordering;
-    });
-
-    hands
-        .into_iter()
-        .enumerate()
-        .map(|(i, hand)| ((i + 1) as u32) * hand.bid)
-        .sum()
-}
-
-fn solve_part2(lines: &Vec<String>) -> u32 {
-    let mut hands: Vec<Hand> = lines
-        .clone()
-        .iter()
-        .filter(|s| s.len() > 0)
-        .map(|x| line_to_hands(x, true))
-        .collect();
-    
+fn get_total_winnings(hands: &mut Vec<Hand>) -> u32 {
     hands.sort_by(|a, b| {
         let hand_type_ordering = a.hand_type.cmp(&b.hand_type);
         if let Ordering::Equal = hand_type_ordering {
@@ -220,6 +189,27 @@ fn solve_part2(lines: &Vec<String>) -> u32 {
         .sum()
 }
 
+fn solve_part1(lines: &Vec<String>) -> u32 {
+    let mut hands: Vec<Hand> = lines
+        .clone()
+        .iter()
+        .filter(|s| s.len() > 0)
+        .map(|x| line_to_hands(x, false))
+        .collect();
+
+    get_total_winnings(&mut hands)
+}
+
+fn solve_part2(lines: &Vec<String>) -> u32 {
+    let mut hands: Vec<Hand> = lines
+        .clone()
+        .iter()
+        .filter(|s| s.len() > 0)
+        .map(|x| line_to_hands(x, true))
+        .collect();
+
+    get_total_winnings(&mut hands)
+}
 
 fn main() {
     // let lines = load_from_stdin();
