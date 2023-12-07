@@ -4,9 +4,9 @@ use aoc2023::load_file;
 
 static DAYSTRING: &str = "day7";
 
-
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Card {
+    Joker,
     Two,
     Three,
     Four,
@@ -21,6 +21,7 @@ enum Card {
     King,
     Ace,
 }
+
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
@@ -40,7 +41,7 @@ struct Hand {
     hand_type: HandType,
 }
 
-fn get_card(c: char) -> Card {
+fn get_card(c: char, is_part_2: bool) -> Card {
     if c == '2' {
         return Card::Two;
     }
@@ -69,6 +70,9 @@ fn get_card(c: char) -> Card {
         return Card::Ten;
     }
     if c == 'J' {
+        if is_part_2 {
+            return Card::Joker;
+        }
         return Card::Jack;
     }
     if c == 'Q' {
@@ -83,21 +87,46 @@ fn get_card(c: char) -> Card {
     return Card::Two;
 }
 
-fn get_type(cards: &String) -> HandType {
+fn get_type(cards: &String, is_part_2: bool) -> HandType {
     let mut map: HashMap<char, u32> = HashMap::new();
+    let mut num_jokers = 0;
     for c in cards.chars() {
-        *map.entry(c).or_insert(0) += 1;
+        if c == 'J' && is_part_2 {
+            num_jokers += 1;
+        } else {
+            *map.entry(c).or_insert(0) += 1;
+        }
     }
 
     let vals: Vec<u32> = map.values().cloned().collect();
+
+    if num_jokers >= 4 {
+        return HandType::FiveOfAKind
+    }
+    if num_jokers == 3 {
+        if vals.iter().any(|x| *x == 2) {
+            return HandType::FiveOfAKind;
+        }
+        return HandType::FourOfAKind;
+    }
+
     if vals.iter().any(|x| *x == 5) {
         return HandType::FiveOfAKind
     }
     if vals.iter().any(|x| *x == 4) {
+        if num_jokers == 1 {
+            return HandType::FiveOfAKind
+        }
         return HandType::FourOfAKind
     }
 
     if vals.iter().any(|x| *x == 3) {
+        if num_jokers == 2 {
+            return HandType::FiveOfAKind
+        }
+        if num_jokers == 1 {
+            return HandType::FourOfAKind
+        }
         if vals.iter().any(|x| *x == 2) {
             return HandType::FullHouse
         }
@@ -105,27 +134,42 @@ fn get_type(cards: &String) -> HandType {
     }
 
     if vals.iter().filter(|x| **x == 2).count() == 2 {
+        if num_jokers == 1 {
+            return HandType::FullHouse
+        }
         return HandType::TwoPair;
     }
 
     if vals.iter().filter(|x| **x == 2).count() == 1 {
+        if num_jokers == 2 {
+            return HandType::FourOfAKind
+        }
+        if num_jokers == 1 {
+            return HandType::ThreeOfAKind
+        }
         return HandType::OnePair;
     }
 
+    if num_jokers == 2 {
+        return HandType::ThreeOfAKind
+    }
+    if num_jokers == 1 {
+        return HandType::OnePair
+    }
     HandType::HighCard
 }
 
-fn line_to_hands(line: &String) -> Hand {
+fn line_to_hands(line: &String, is_part_2: bool) -> Hand {
     let parts: Vec<&str> = line
         .split(' ')
         .collect();
     let cards = parts[0]
         .to_string();
-    let hand_type = get_type(&cards);
+    let hand_type = get_type(&cards, is_part_2);
 
     let cards = cards
         .chars()
-        .map(|c| get_card(c))
+        .map(|c| get_card(c, is_part_2))
         .collect::<Vec<Card>>();
     let cards = [
         cards[0],
@@ -142,13 +186,12 @@ fn line_to_hands(line: &String) -> Hand {
     };
 }
 
-#[allow(unused_variables)]
 fn solve_part1(lines: &Vec<String>) -> u32 {
     let mut hands: Vec<Hand> = lines
         .clone()
         .iter()
         .filter(|s| s.len() > 0)
-        .map(|x| line_to_hands(x))
+        .map(|x| line_to_hands(x, false))
         .collect();
     
     hands.sort_by(|a, b| {
@@ -166,9 +209,31 @@ fn solve_part1(lines: &Vec<String>) -> u32 {
         .sum()
 }
 
-#[allow(unused_variables)]
 fn solve_part2(lines: &Vec<String>) -> u32 {
-    0
+    let mut hands: Vec<Hand> = lines
+        .clone()
+        .iter()
+        .filter(|s| s.len() > 0)
+        .map(|x| line_to_hands(x, true))
+        .collect();
+    
+    hands.sort_by(|a, b| {
+        let hand_type_ordering = a.hand_type.cmp(&b.hand_type);
+        if let Ordering::Equal = hand_type_ordering {
+            return a.cards.cmp(&b.cards);
+        }
+        return hand_type_ordering;
+    });
+
+    for hand in hands.iter() {
+        println!("{:?}", &hand);
+    }
+
+    hands
+        .into_iter()
+        .enumerate()
+        .map(|(i, hand)| ((i + 1) as u32) * hand.bid)
+        .sum()
 }
 
 
@@ -204,7 +269,7 @@ mod tests {
         let file_path = format!("./data/{DAYSTRING}/example1.txt");
         assert_eq!(
             solve_part2(&load_file(&file_path)),
-            1337
+            5905
         );
     }
 }
