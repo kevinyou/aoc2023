@@ -110,6 +110,8 @@ fn get_type(cards: &String, is_part_2: bool) -> HandType {
         return HandType::FourOfAKind;
     }
 
+    let num_pairs = vals.iter().filter(|x| **x == 2).count();
+
     if vals.iter().any(|x| *x == 5) {
         return HandType::FiveOfAKind
     }
@@ -127,20 +129,21 @@ fn get_type(cards: &String, is_part_2: bool) -> HandType {
         if num_jokers == 1 {
             return HandType::FourOfAKind
         }
-        if vals.iter().any(|x| *x == 2) {
+        if num_pairs == 1 {
             return HandType::FullHouse
         }
         return HandType::ThreeOfAKind
     }
 
-    if vals.iter().filter(|x| **x == 2).count() == 2 {
+
+    if num_pairs == 2 {
         if num_jokers == 1 {
             return HandType::FullHouse
         }
         return HandType::TwoPair;
     }
 
-    if vals.iter().filter(|x| **x == 2).count() == 1 {
+    if num_pairs == 1 {
         if num_jokers == 2 {
             return HandType::FourOfAKind
         }
