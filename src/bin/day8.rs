@@ -34,25 +34,23 @@ mod math {
     }
 }
 
-struct Node {
-    left: String,
-    right: String,
+struct Node<'a> {
+    left: &'a str,
+    right: &'a  str,
 }
 
 #[derive(Eq, PartialEq, Hash)]
-struct Event {
-    position: String,
+struct Event<'a> {
+    position: &'a str,
     direction_index: usize,
 }
 
-fn parse_nodes(lines: &Vec<String>) -> HashMap<String, Node> {
+fn parse_nodes(lines: &Vec<String>) -> HashMap<&str, Node> {
     let mut map = HashMap::new();
     for line in lines {
-        let line: Vec<&str> = line.split('=').collect();
-        let label = line[0].trim().to_string();
-        let pair: Vec<&str> = line[1].split(',').collect();
-        let left = pair[0].chars().filter(|x| x.is_alphanumeric()).collect::<String>().to_string();
-        let right = pair[1].chars().filter(|x| x.is_alphanumeric()).collect::<String>().to_string();
+        let (label, pair) = line.split_once(" = ").expect("failed to split =");
+        let (left, right) = pair[1..pair.len() - 1]
+            .split_once(", ").unwrap();
 
         let node = Node {
             left: left,
@@ -77,17 +75,17 @@ fn solve_part1(lines: &Vec<String>) -> u32 {
         .collect::<Vec<String>>();
     
     let node_map = parse_nodes(&node_lines);
-    let mut position = "AAA".to_string();
+    let mut position = "AAA";
     let mut steps = 0;
     let mut direction_index = 0;
     while position != "ZZZ" {
-        let node = node_map.get(&position).expect("missing node");
+        let node = node_map.get(position).expect("missing node");
 
         let direction = directions[direction_index];
         if direction == 'L' {
-            position = node.left.clone();
+            position = node.left;
         } else {
-            position = node.right.clone();
+            position = node.right;
         }
 
         direction_index = (direction_index + 1) % directions.len();
@@ -108,8 +106,8 @@ fn solve_part1(lines: &Vec<String>) -> u32 {
 // After 1 + 2n + 1 == 2n + 2 steps first position is correct
 // After 1 + 3m + 2 == 3m + 3 steps second position is correct
 // What's the lowest number that satisfies that?
-fn get_equations(starting_position: &String, directions: &Vec<char>, node_map: &HashMap<String, Node>) -> (u64, u64, Vec<u64>) {
-    let mut position = starting_position.clone().to_string();
+fn get_equations(starting_position: &str, directions: &Vec<char>, node_map: &HashMap<&str, Node>) -> (u64, u64, Vec<u64>) {
+    let mut position = starting_position;
     let mut memo: HashMap<Event, u64> = HashMap::new();
     let mut direction_index: usize = 0;
     let mut steps: u64 = 0;
@@ -122,7 +120,7 @@ fn get_equations(starting_position: &String, directions: &Vec<char>, node_map: &
         }
 
         let event = Event {
-            position: position.clone(),
+            position: position,
             direction_index: direction_index,
         };
 
@@ -137,13 +135,13 @@ fn get_equations(starting_position: &String, directions: &Vec<char>, node_map: &
             memo.insert(event, steps);
         }
         let node = node_map
-            .get(&position)
+            .get(position)
             .expect("missing node");
 
         if directions[direction_index] == 'L' {
-            position = node.left.clone();
+            position = node.left;
         } else {
-            position = node.right.clone();
+            position = node.right;
         }
 
         direction_index = (direction_index + 1) % directions.len();
@@ -164,7 +162,7 @@ fn solve_part2(lines: &Vec<String>) -> u64 {
     
     let node_map = parse_nodes(&node_lines);
 
-    let positions: Vec<String> = node_map
+    let positions: Vec<&str> = node_map
         .keys()
         .filter(|label| label.ends_with("A"))
         .cloned()
@@ -197,7 +195,7 @@ fn solve_part2_brute(lines: &Vec<String>) -> u64 {
     
     let node_map = parse_nodes(&node_lines);
 
-    let mut positions: Vec<String> = node_map
+    let mut positions: Vec<&str> = node_map
         .keys()
         .filter(|label| label.ends_with("A"))
         .cloned()
@@ -211,11 +209,11 @@ fn solve_part2_brute(lines: &Vec<String>) -> u64 {
 
             let direction = directions[direction_index];
             if direction == 'L' {
-                return node.left.clone();
+                return node.left;
             } else {
-                return node.right.clone();
+                return node.right;
             }
-        }).collect::<Vec<String>>();
+        }).collect::<Vec<&str>>();
 
         positions = new_positions;
         direction_index = (direction_index + 1) % directions.len();
