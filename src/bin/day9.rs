@@ -3,7 +3,7 @@ use aoc2023::load_file;
 
 static DAYSTRING: &str = "day9";
 
-fn foo(sequence: &Vec<i32>) -> i32 {
+fn get_next_num(sequence: &Vec<i32>) -> i32 {
     let mut derivatives = sequence.clone();
     let mut sum = 0;
 
@@ -22,7 +22,7 @@ fn foo(sequence: &Vec<i32>) -> i32 {
     sum
 }
 
-fn foo_part2(sequence: &Vec<i32>) -> i32 {
+fn get_prev_num(sequence: &Vec<i32>) -> i32 {
     let mut list: Vec<Vec<i32>> = Vec::new();
     list.push(sequence.clone());
 
@@ -62,7 +62,7 @@ fn solve_part1(lines: &Vec<String>) -> i32 {
         .map(|x| x.split(' ')
         .map(|s| s.parse().expect("number in each"))
         .collect::<Vec<i32>>())
-        .map(|x| foo(&x))
+        .map(|x| get_next_num(&x))
         .sum()
 }
 
@@ -73,7 +73,7 @@ fn solve_part2(lines: &Vec<String>) -> i32 {
         .map(|x| x.split(' ')
         .map(|s| s.parse().expect("number in each"))
         .collect::<Vec<i32>>())
-        .map(|x| foo_part2(&x))
+        .map(|x| get_prev_num(&x))
         .sum()
 }
 
