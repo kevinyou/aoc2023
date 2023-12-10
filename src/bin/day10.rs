@@ -247,10 +247,28 @@ mod tests {
 
     #[test]
     fn test_part_2() {
-        let file_path = format!("./data/{DAYSTRING}/example1.txt");
+        let example_3 = format!("./data/{DAYSTRING}/example3.txt");
         assert_eq!(
-            solve_part2(&load_file(&file_path)),
-            1337
+            solve_part2(&load_file(&example_3)),
+            4
+        );
+
+        let example_4 = format!("./data/{DAYSTRING}/example4.txt");
+        assert_eq!(
+            solve_part2(&load_file(&example_4)),
+            4
+        );
+
+        let example_5 = format!("./data/{DAYSTRING}/example5.txt");
+        assert_eq!(
+            solve_part2(&load_file(&example_5)),
+            8
+        );
+
+        let example_6 = format!("./data/{DAYSTRING}/example6.txt");
+        assert_eq!(
+            solve_part2(&load_file(&example_6)),
+            10
         );
     }
 }
