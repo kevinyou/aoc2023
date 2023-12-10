@@ -26,25 +26,25 @@ fn get_prev_num(sequence: &Vec<i32>) -> i32 {
     let mut list: Vec<Vec<i32>> = Vec::new();
     list.push(sequence.clone());
 
-    let mut elem = list[0].clone();
-    while list.len() < sequence.len() {
-        let new_seq = elem
+    for i in 1..sequence.len() {
+        let x = &list[i-1];
+        let dx = x
             .clone()
             .into_iter()
-            .take(elem.len() - 1)
+            .take(x.len() - 1)
             .enumerate()
-            .map(|(i, _)| elem[i+1] - elem[i])
+            .map(|(j, _)| x[j+1] - x[j])
             .collect::<Vec<i32>>();
-        list.push(new_seq.clone());
 
-        elem = new_seq;
+        list.push(dx);
     }
 
     for i in (0..(list.len() - 1)).rev() {
-        let future_elem = *list.get(i+1).unwrap().first().unwrap();
-        let past_elem = *list.get(i).unwrap().first().unwrap();
-        let elem = &mut list[i];
-        elem.insert(0, past_elem - future_elem);
+        let x_0 = *list.get(i).unwrap().first().unwrap();
+        let dx_0 = *list.get(i+1).unwrap().first().unwrap();
+        let x_neg_1 = x_0 - dx_0;
+
+        list[i].insert(0, x_neg_1);
     }
 
     list 
