@@ -5,6 +5,72 @@ use aoc2023::load_file;
 
 static DAYSTRING: &str = "day10";
 
+fn expand_c(c: char) -> [[char; 3]; 3] {
+    match c {
+        '.' => [
+            ['.', '.', '.'],
+            ['.', '.', '.'],
+            ['.', '.', '.'],
+        ],
+        '|' => [
+            ['.', 'X', '.'],
+            ['.', 'X', '.'],
+            ['.', 'X', '.'],
+        ],
+        '-' => [
+            ['.', '.', '.'],
+            ['X', 'X', 'X'],
+            ['.', '.', '.'],
+        ],
+        'L' => [
+            ['.', 'X', '.'],
+            ['.', 'X', 'X'],
+            ['.', '.', '.'],
+        ],
+        'F' => [
+            ['.', '.', '.'],
+            ['.', 'X', 'X'],
+            ['.', 'X', '.'],
+        ],
+        'J' => [
+            ['.', 'X', '.'],
+            ['X', 'X', '.'],
+            ['.', '.', '.'],
+        ],
+        '7' => [
+            ['.', '.', '.'],
+            ['X', 'X', '.'],
+            ['.', 'X', '.'],
+        ],
+        'S' => [
+            ['.', '?', '.'],
+            ['?', '?', '?'],
+            ['.', '?', '.'],
+        ],
+        _ => panic!("unexpected c {c}")
+    }
+}
+
+fn expand(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
+    let mut expanded_grid: Vec<Vec<char>> = Vec::new();
+    for row in grid.iter() {
+        let mut expanded_row0 = Vec::new();
+        let mut expanded_row1 = Vec::new();
+        let mut expanded_row2 = Vec::new();
+        for c in row {
+            let expanded_c = expand_c(*c);
+            expanded_row0.extend_from_slice(&expanded_c[0]);
+            expanded_row1.extend_from_slice(&expanded_c[1]);
+            expanded_row2.extend_from_slice(&expanded_c[2]);
+        }
+        expanded_grid.push(expanded_row0);
+        expanded_grid.push(expanded_row1);
+        expanded_grid.push(expanded_row2);
+    }
+
+    expanded_grid
+}
+
 
 #[derive(Debug)]
 enum Direction {
@@ -243,6 +309,36 @@ mod tests {
             solve_part1(&load_file(&complex_2)),
             ans_2
         );
+    }
+
+    #[test]
+    fn test_expand() {
+        let example_3 = format!("./data/{DAYSTRING}/example5.txt");
+
+        let lines = &load_file(&example_3);
+        let grid: Vec<Vec<char>> = lines
+            .clone()
+            .into_iter()
+            .map(|elem| elem.chars().collect())
+            .collect();
+
+        for row in grid.iter() {
+            for c in row {
+                print!("{}", c);
+            }
+            println!();
+        }
+
+        let expanded_grid = expand(&grid);
+
+        for row in expanded_grid {
+            for c in row {
+                print!("{}", c);
+            }
+            println!();
+        }
+
+        panic!("boom");
     }
 
     #[test]
