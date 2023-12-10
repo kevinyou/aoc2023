@@ -1,9 +1,20 @@
-
+    
 use std::collections::HashSet;
 
 use aoc2023::load_file;
 
 static DAYSTRING: &str = "day10";
+
+// for debug purposes
+#[allow(dead_code)]
+fn print_grid(grid: &Vec<Vec<char>>) {
+    for row in grid.iter() {
+        for c in row {
+            print!("{}", c);
+        }
+        println!();
+    }
+}
 
 fn expand_c(c: char) -> [[char; 3]; 3] {
     match c {
@@ -71,8 +82,54 @@ fn expand(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
     expanded_grid
 }
 
+fn flood_fill(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
+    let mut stack: Vec<Point> = vec![Point {
+        x: 0,
+        y: 0,
+    }];
 
-#[derive(Debug)]
+    let ds = [
+        Point {
+            x: 1,
+            y: 0
+        },
+        Point {
+            x: -1,
+            y: 0
+        },
+        Point {
+            x: 0,
+            y: 1
+        },
+        Point {
+            x: 0,
+            y: -1
+        },
+    ];
+
+    while !stack.is_empty() {
+        let point = stack.pop().unwrap();
+
+        if grid[point.x as usize][point.y as usize] == '.' {
+            grid[point.x as usize][point.y as usize] = 'W';
+
+            for d in ds {
+                let potential_coord = Point {
+                    x: point.x + d.x,
+                    y: point.y + d.y,
+                };
+                if potential_coord.is_valid(grid.len(), grid[0].len()) {
+                    stack.push(potential_coord);
+                }
+            }
+        }
+
+    }
+
+    grid
+}
+
+#[derive(Debug, PartialEq, Clone)]
 enum Direction {
     Left,
     Right,
@@ -80,7 +137,7 @@ enum Direction {
     Down,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 struct Point {
     x: i32,
     y: i32,
@@ -149,6 +206,132 @@ fn determine_next_dir(from_dir: &Direction, c: char) -> Direction {
             _ => panic!("unexpected from dir {:?} for c {}", from_dir, c)
         },
     }
+}
+
+fn get_clean_grid(grid: &Vec<Vec<char>>, start: &Point) -> Vec<Vec<char>> {
+    let starting_checks = [
+        StartingCheck {
+            d: Point {
+                x: 1,
+                y: 0
+            },
+            valid_cs: ['|', 'L', 'J'],
+            traveling_dir: Direction::Down,
+        },
+        StartingCheck {
+            d: Point {
+                x: -1,
+                y: 0
+            },
+            valid_cs: ['|', 'F', '7'],
+            traveling_dir: Direction::Up,
+        },
+        StartingCheck {
+            d: Point {
+                x: 0,
+                y: 1
+            },
+            valid_cs: ['-', 'J', '7'],
+            traveling_dir: Direction::Right,
+        },
+        StartingCheck {
+            d: Point {
+                x: 0,
+                y: -1
+            },
+            valid_cs: ['-', 'L', 'F'],
+            traveling_dir: Direction::Left,
+        },
+    ];
+
+    let mut point = start.clone();
+    let mut traveling_dir: Direction = Direction::Down;
+    let mut first_dir: Direction = Direction::Down;
+    let mut visited: HashSet<Point> = HashSet::new();
+    let mut clean_grid = grid.clone();
+
+    visited.insert(point);
+
+    // Find the first char adjacent to S that connects correctly
+    // i.e. 
+    for starting_check in starting_checks {
+        let d = starting_check.d;
+        let valid_cs = starting_check.valid_cs;
+        let potential_coord = Point {
+            x: point.x + d.x,
+            y: point.y + d.y,
+        };
+
+        if potential_coord.is_valid(grid.len(), grid[0].len()) {
+            let c = grid[potential_coord.x as usize][potential_coord.y as usize];
+            if valid_cs.contains(&c) {
+                point = potential_coord;
+                visited.insert(point);
+                first_dir = starting_check.traveling_dir.clone();
+                let original_traveling_dir = starting_check.traveling_dir;
+                traveling_dir = determine_next_dir(&original_traveling_dir, c);
+                break;
+            }
+        }
+    }
+
+    let mut last_dir: Direction = Direction::Down;
+    while point != *start {
+        let new_point = apply_next_dir(&traveling_dir, &point);
+        let c = grid[new_point.x as usize][new_point.y as usize];
+        if c == 'S' {
+            last_dir = traveling_dir;
+            break;
+        }
+        let new_traveling_dir = determine_next_dir(&traveling_dir, c);
+        // apply next_dir to point
+
+        point = new_point;
+        traveling_dir = new_traveling_dir;
+        visited.insert(point);
+    }
+
+    for x in 0..grid.len() {
+        for y in 0..grid[0].len() {
+            let checking_point = Point {
+                x: x as i32,
+                y: y as i32,
+            };
+            if !visited.contains(&checking_point) {
+                clean_grid[x][y] = '.';
+            } else if grid[checking_point.x as usize][checking_point.y as usize] == 'S' {
+                clean_grid[x][y] = match first_dir {
+                    Direction::Down => match last_dir {
+                        Direction::Left => 'F',
+                        Direction::Right=> '7',
+                        Direction::Down=> '|',
+                        _ => panic!("did not expect first_dir {:?} last_dir {:?}", first_dir, last_dir),
+                    },
+                    Direction::Up => match last_dir {
+                        Direction::Left => 'L',
+                        Direction::Right => 'J',
+                        Direction::Up => '|',
+                        _ => panic!("did not expect first_dir {:?} last_dir {:?}", first_dir, last_dir),
+                    },
+                    Direction::Left => match last_dir {
+                        Direction::Up => '7',
+                        Direction::Down => 'J',
+                        Direction::Left => '-',
+                        _ => panic!("did not expect first_dir {:?} last_dir {:?}", first_dir, last_dir),
+                    },
+                    Direction::Right => match last_dir {
+                        Direction::Up => 'F',
+                        Direction::Down => 'L',
+                        Direction::Right => '-',
+                        _ => panic!("did not expect first_dir {:?} last_dir {:?}", first_dir, last_dir),
+                    },
+                };
+            }
+        }
+    }
+
+
+    clean_grid
 }
 
 fn get_loop_length(grid: &Vec<Vec<char>>, start: &Point) -> usize {
@@ -233,7 +416,6 @@ fn get_loop_length(grid: &Vec<Vec<char>>, start: &Point) -> usize {
     loop_length
 }
 
-#[allow(unused_variables)]
 fn solve_part1(lines: &Vec<String>) -> usize {
     let grid: Vec<Vec<char>> = lines
         .clone()
@@ -258,9 +440,56 @@ fn solve_part1(lines: &Vec<String>) -> usize {
     get_loop_length(&grid, &point) / 2
 }
 
-#[allow(unused_variables)]
 fn solve_part2(lines: &Vec<String>) -> u32 {
-    0
+    let grid: Vec<Vec<char>> = lines
+        .clone()
+        .into_iter()
+        .map(|elem| elem.chars().collect())
+        .collect();
+
+    let mut point = Point {
+        x: 0,
+        y: 0,
+    };
+    for i in 0..grid.len() {
+        for j in 0..grid[0].len() {
+            if grid[i][j] == 'S' {
+                point.x = i as i32;
+                point.y = j as i32;
+                break;
+            }
+        }
+    }
+
+    // first, traverse the grid to mark all parts of the path, and namely, unmark all parts not in the path
+    // this includes changing S to the actual shape.
+    let clean_grid = get_clean_grid(&grid, &point);
+    // then, expand the grid
+    let expanded_grid = expand(&clean_grid);
+
+    // run flood fill from the top left corner (guaranteed to be outside)
+    let expanded_grid = flood_fill(expanded_grid);
+
+    let mut count = 0;
+    // then count how many 3x3 grids are still dots.
+    for x in (0..expanded_grid.len()).step_by(3) {
+        for y in (0..expanded_grid[0].len()).step_by(3) {
+            let mut is_unfilled = true;
+            for i in 0..2 {
+                for j in 0..2 {
+                    if expanded_grid[x+j][y+i] != '.' {
+                        is_unfilled = false;
+                        break;
+                    }
+                }
+            }
+
+            if is_unfilled {
+                count += 1;
+            }
+        }
+    }
+    count
 }
 
 
@@ -313,7 +542,7 @@ mod tests {
 
     #[test]
     fn test_expand() {
-        let example_3 = format!("./data/{DAYSTRING}/example5.txt");
+        let example_3 = format!("./data/{DAYSTRING}/example6.txt");
 
         let lines = &load_file(&example_3);
         let grid: Vec<Vec<char>> = lines
@@ -321,24 +550,14 @@ mod tests {
             .into_iter()
             .map(|elem| elem.chars().collect())
             .collect();
-
-        for row in grid.iter() {
-            for c in row {
-                print!("{}", c);
-            }
-            println!();
-        }
+        
+        print_grid(&grid);
 
         let expanded_grid = expand(&grid);
 
-        for row in expanded_grid {
-            for c in row {
-                print!("{}", c);
-            }
-            println!();
-        }
+        print_grid(&expanded_grid);
 
-        panic!("boom");
+        // panic!("boom");
     }
 
     #[test]

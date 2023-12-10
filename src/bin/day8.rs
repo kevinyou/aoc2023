@@ -182,6 +182,7 @@ fn solve_part2(lines: &Vec<String>) -> u64 {
     ) as u64
 }
 
+#[allow(dead_code)]
 fn solve_part2_brute(lines: &Vec<String>) -> u64 {
     let directions_line = &lines[0];
     let directions = directions_line.chars().collect::<Vec<char>>();
