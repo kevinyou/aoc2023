@@ -6,12 +6,12 @@ static DAYSTRING: &str = "day11";
 // TODO: move these into common utilities
 #[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 struct Point {
-    x: i32,
-    y: i32,
+    x: i64,
+    y: i64,
 }
 
 impl Point {
-    pub fn dist(self, other: Self) -> i32 {
+    pub fn dist(self, other: Self) -> i64 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
     }
 
@@ -76,7 +76,7 @@ fn parse_grid(lines: &Vec<String>) -> Vec<Vec<char>> {
 }
 
 #[allow(unused_variables)]
-fn solve_part1(lines: &Vec<String>) -> i32 {
+fn solve_part1(lines: &Vec<String>) -> i64 {
     let grid = parse_grid(lines);
     let grid = cosmic_expansion(grid);
 
@@ -85,8 +85,8 @@ fn solve_part1(lines: &Vec<String>) -> i32 {
         for j in 0..grid[0].len() {
             if grid[i][j] == '#' {
                 galaxies.push(Point {
-                    x: i as i32,
-                    y: j as i32,
+                    x: i as i64,
+                    y: j as i64,
                 })
             }
         }
@@ -100,9 +100,60 @@ fn solve_part1(lines: &Vec<String>) -> i32 {
     sum
 }
 
-#[allow(unused_variables)]
-fn solve_part2(lines: &Vec<String>) -> u32 {
-    0
+fn solve_part2(lines: &Vec<String>, factor: i64) -> i64 {
+    let grid = parse_grid(lines);
+
+    let empty_rows: Vec<usize> = grid
+        .iter()
+        .enumerate()
+        .filter(|(_, row)| {
+            row.iter().all(|c| *c == '.')
+        })
+        .map(|(i, _)| i)
+        .collect();
+
+    let empty_cols: Vec<usize> = grid[0]
+        .iter()
+        .enumerate()
+        .filter(|(j, _)| {
+            let cs: Vec<char> = grid
+                .iter()
+                .map(|row| row[*j])
+                .collect();
+            cs.iter().all(|c| *c == '.')
+        })
+        .map(|(j, _)| j)
+        .collect();
+
+    let mut galaxies: Vec<Point> = Vec::new();
+    let mut expanded_x = 0;
+    for arr_x in 0..grid.len() {
+        let mut expanded_y = 0;
+        for arr_y in 0..grid[0].len() {
+            if grid[arr_x][arr_y] == '#' {
+                galaxies.push(Point {
+                    x: expanded_x,
+                    y: expanded_y,
+                });
+            }
+            if empty_cols.contains(&arr_y) {
+                expanded_y += factor;
+            }
+            expanded_y += 1;
+        }
+        if empty_rows.contains(&arr_x) {
+            expanded_x += factor;
+        }
+        expanded_x += 1;
+    }
+
+    let mut sum = 0;
+    for i in 0..galaxies.len() {
+        for j in (i+1)..galaxies.len() {
+            sum += galaxies[i].dist(galaxies[j]);
+        }
+    }
+    sum
 }
 
 
@@ -115,7 +166,7 @@ fn main() {
 
     println!("Part 1: {part1}");
 
-    let part2 = solve_part2(&lines);
+    let part2 = solve_part2(&lines, 1_000_000 - 1);
 
     println!("Part 2: {part2}");
 }
@@ -134,11 +185,29 @@ mod tests {
     }
 
     #[test]
-    fn test_part_2() {
+    fn test_part_2_2x() {
         let file_path = format!("./data/{DAYSTRING}/example1.txt");
         assert_eq!(
-            solve_part2(&load_file(&file_path)),
-            1337
+            solve_part2(&load_file(&file_path), 2-1),
+            374
+        );
+    }
+
+    #[test]
+    fn test_part_2_10x() {
+        let file_path = format!("./data/{DAYSTRING}/example1.txt");
+        assert_eq!(
+            solve_part2(&load_file(&file_path), 10-1),
+            1030
+        );
+    }
+
+    #[test]
+    fn test_part_2_100x() {
+        let file_path = format!("./data/{DAYSTRING}/example1.txt");
+        assert_eq!(
+            solve_part2(&load_file(&file_path), 100-1),
+            8410
         );
     }
 }
