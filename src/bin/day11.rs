@@ -3,6 +3,20 @@ use aoc2023::load_file;
 
 static DAYSTRING: &str = "day11";
 
+// TODO: move these into common utilities
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Point {
+    pub fn dist(self, other: Self) -> i32 {
+        (self.x - other.x).abs() + (self.y - other.y).abs()
+    }
+
+}
+
 #[allow(dead_code)]
 fn print_grid(grid: &Vec<Vec<char>>) {
     for row in grid.iter() {
@@ -62,12 +76,28 @@ fn parse_grid(lines: &Vec<String>) -> Vec<Vec<char>> {
 }
 
 #[allow(unused_variables)]
-fn solve_part1(lines: &Vec<String>) -> u32 {
+fn solve_part1(lines: &Vec<String>) -> i32 {
     let grid = parse_grid(lines);
-    print_grid(&grid);
     let grid = cosmic_expansion(grid);
-    print_grid(&grid);
-    0
+
+    let mut galaxies: Vec<Point> = Vec::new();
+    for i in 0..grid.len() {
+        for j in 0..grid[0].len() {
+            if grid[i][j] == '#' {
+                galaxies.push(Point {
+                    x: i as i32,
+                    y: j as i32,
+                })
+            }
+        }
+    }
+    let mut sum = 0;
+    for i in 0..galaxies.len() {
+        for j in (i+1)..galaxies.len() {
+            sum += galaxies[i].dist(galaxies[j]);
+        }
+    }
+    sum
 }
 
 #[allow(unused_variables)]
